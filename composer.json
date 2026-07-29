@@ -1,5 +1,5 @@
 {
-    "name": "devskio/statamic-ohdear-health-check",
+    "name": "devskio/statamic-ohdear-addon",
     "description": "Statamic addon that integrates the Oh Dear health-check endpoint into the Statamic control panel.",
     "type": "statamic-addon",
     "license": "MIT",

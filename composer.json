@@ -1,0 +1,54 @@
+{
+    "name": "devskio/statamic-ohdear-health-check",
+    "description": "Statamic addon that integrates the Oh Dear health-check endpoint into the Statamic control panel.",
+    "type": "statamic-addon",
+    "license": "MIT",
+    "keywords": [
+        "statamic",
+        "ohdear",
+        "health-check",
+        "monitoring",
+        "statamic-addon"
+    ],
+    "authors": [
+        {
+            "name": "Devskio",
+            "email": "contact@devsk.io",
+            "homepage": "https://devskio.com",
+            "role": "Company"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/devskio/statamic-ohdear-addon/issues",
+        "source": "https://github.com/devskio/statamic-ohdear-addon"
+    },
+    "require": {
+        "php": "^8.2",
+        "devskio/laravel-ohdear-health-check": "^1.0" ,
+        "guzzlehttp/guzzle": "^7.0",
+        "statamic/cms": "^5.0 || ^6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Devskio\\StatamicOhdearHealthCheck\\": "src"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pixelfear/composer-dist-plugin": true
+        }
+    },
+    "extra": {
+        "statamic": {
+            "name": "Oh Dear Health Check",
+            "description": "Integrates the Oh Dear health-check endpoint into the Statamic control panel with Statamic-specific checks."
+        },
+        "laravel": {
+            "providers": [
+                "Devskio\\StatamicOhdearHealthCheck\\ServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

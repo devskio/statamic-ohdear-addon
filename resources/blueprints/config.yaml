@@ -1,0 +1,155 @@
+title: 'OhDear Health Check Configuration'
+tabs:
+  general:
+    display: General
+    sections:
+      -
+        fields:
+          -
+            handle: health_check_path
+            field:
+              type: text
+              display: 'Health check path'
+              instructions: 'Route handled by the shared Laravel package endpoint.'
+              default: '/ohdear-health-check'
+              localizable: false
+          -
+            handle: oh_dear_secret_key
+            field:
+              type: text
+              display: 'Oh dear secret key'
+              localizable: false
+          -
+            handle: enable_database_check
+            field:
+              default: false
+              type: toggle
+              display: 'Enable database check'
+              localizable: false
+          -
+            handle: enable_statamic_version_check
+            field:
+              default: true
+              type: toggle
+              display: 'Enable statamic version check'
+              localizable: false
+  check_disk_space:
+    display: 'Check disk space'
+    sections:
+      -
+        display: 'New Section'
+        fields:
+          -
+            handle: enable_disk_used_space_check
+            field:
+              default: true
+              type: toggle
+              display: 'Enable disk used space check (shared package)'
+              localizable: false
+          -
+            handle: disk_space_error_threshold
+            field:
+              default: '90'
+              type: float
+              display: 'Disk space error threshold'
+              instructions: 'in %'
+              localizable: false
+              if:
+                enable_disk_used_space_check: 'equals true'
+          -
+            handle: disk_space_warning_threshold
+            field:
+              default: '70'
+              type: float
+              display: 'Disk space warning threshold'
+              instructions: 'in %'
+              localizable: false
+              if:
+                enable_disk_used_space_check: 'equals true'
+  check_error_log:
+    display: 'Check error log'
+    sections:
+      -
+        display: 'New Section'
+        fields:
+          -
+            handle: enable_error_log_size_check
+            field:
+              default: true
+              type: toggle
+              display: 'Enable error log size check (shared package)'
+              localizable: false
+          -
+            handle: error_log_error_threshold
+            field:
+              default: '500'
+              type: float
+              display: 'Error log error threshold'
+              instructions: 'in Megabytes'
+              localizable: false
+              if:
+                enable_error_log_size_check: 'equals true'
+          -
+            handle: error_log_warning_threshold
+            field:
+              default: '50'
+              type: float
+              display: 'Error log warning threshold'
+              instructions: 'in Megabytes'
+              localizable: false
+              if:
+                enable_error_log_size_check: 'equals true'
+  check_storage_size:
+    display: 'Check storage size'
+    sections:
+      -
+        display: 'New Section'
+        fields:
+          -
+            handle: enable_storage_folder_size_check
+            field:
+              default: true
+              type: toggle
+              display: 'Enable storage folder size check'
+              localizable: false
+          -
+            handle: storage_folder_size_error_threshold
+            field:
+              default: '500'
+              type: float
+              display: 'Storage folder size error threshold'
+              instructions: 'in Megabytes'
+              localizable: false
+              if:
+                enable_storage_folder_size_check: 'equals true'
+          -
+            handle: storage_folder_size_warning_threshold
+            field:
+              default: '50'
+              type: float
+              display: 'Storage folder size warning threshold'
+              instructions: 'in Megabytes'
+              localizable: false
+              if:
+                enable_storage_folder_size_check: 'equals true'
+  check_forgotten_files:
+    display: 'Check forgotten files'
+    sections:
+      -
+        display: 'New Section'
+        fields:
+          -
+            handle: enable_forgotten_files_check
+            field:
+              default: true
+              type: toggle
+              display: 'Enable forgotten files check'
+              localizable: false
+          -
+            handle: allowed_files
+            field:
+              type: array
+              display: 'Allowed files'
+              localizable: false
+              if:
+                enable_forgotten_files_check: 'equals true'

@@ -19,7 +19,7 @@ class ServiceProvider extends AddonServiceProvider
     {
         parent::register();
 
-        $this->mergeConfigFrom(__DIR__.'/../config/statamic-ohdear-health-check.php', 'statamic-ohdear-health-check');
+        $this->mergeConfigFrom(__DIR__.'/../config/statamic-ohdear-addon.php', 'statamic-ohdear-addon');
 
         $this->app->booting(function (): void {
             $this->synchronizeSharedHealthCheckConfig();
@@ -30,20 +30,22 @@ class ServiceProvider extends AddonServiceProvider
     {
         parent::boot();
 
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'statamic-ohdear-addon');
+
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/statamic-ohdear-health-check.php' => config_path('statamic-ohdear-health-check.php'),
-            ], 'statamic-ohdear-health-check-config');
+                __DIR__.'/../config/statamic-ohdear-addon.php' => config_path('statamic-ohdear-addon.php'),
+            ], 'statamic-ohdear-addon-config');
 
             $this->publishes([
-                __DIR__.'/../resources/blueprints' => resource_path('blueprints/vendor/statamic-ohdear-health-check'),
-            ], 'statamic-ohdear-health-check-blueprints');
+                __DIR__.'/../resources/blueprints' => resource_path('blueprints/vendor/statamic-ohdear-addon'),
+            ], 'statamic-ohdear-addon-blueprints');
         }
 
         Nav::extend(function ($nav) {
             $nav->create('OhDear Health Check')
                 ->section('Tools')
-                ->route('statamic-ohdear-health-check.config')
+                ->route('statamic-ohdear-addon.config')
                 ->icon('pulse');
         });
     }
@@ -51,7 +53,7 @@ class ServiceProvider extends AddonServiceProvider
     protected function synchronizeSharedHealthCheckConfig(): void
     {
         $sharedConfig = config('ohdear-health-check', []);
-        $addonConfig = config('statamic-ohdear-health-check', []);
+        $addonConfig = config('statamic-ohdear-addon', []);
         $additionalChecks = config('ohdear-health-check.additional_checks', []);
 
         $path = Arr::get($addonConfig, 'health_route.path', Arr::get($sharedConfig, 'health_route.path', '/ohdear-health-check'));

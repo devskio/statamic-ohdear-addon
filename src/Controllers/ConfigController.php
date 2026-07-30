@@ -9,14 +9,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
-use Inertia\Inertia;
 use Statamic\Facades\Blueprint;
 
 class ConfigController
 {
     public function index()
     {
-        $blueprint = Blueprint::find('statamic-ohdear-health-check::config');
+        $blueprint = Blueprint::find('statamic-ohdear-addon::config');
 
         abort_unless($blueprint !== null, 404);
 
@@ -25,20 +24,18 @@ class ConfigController
             ->addValues($this->currentValues())
             ->preProcess();
 
-        return Inertia::render('PublishForm', [
-            'title'        => 'OhDear Health Check',
-            'blueprint'    => $blueprint->toPublishArray(),
-            'values'       => $fields->values(),
-            'meta'         => $fields->meta(),
-            'submitUrl'    => cp_route('statamic-ohdear-health-check.config.save'),
-            'submitMethod' => 'post',
-            'asConfig'     => true,
+        return view('statamic-ohdear-addon::config', [
+            'title'     => 'OhDear Health Check',
+            'blueprint' => $blueprint->toPublishArray(),
+            'values'    => $fields->values(),
+            'meta'      => $fields->meta(),
+            'action'    => cp_route('statamic-ohdear-addon.config.save'),
         ]);
     }
 
     public function save(Request $request): JsonResponse
     {
-        $blueprint = Blueprint::find('statamic-ohdear-health-check::config');
+        $blueprint = Blueprint::find('statamic-ohdear-addon::config');
 
         abort_unless($blueprint !== null, 404);
 
@@ -51,7 +48,7 @@ class ConfigController
         $values = $fields->process()->values()->all();
 
         $this->writeConfig(config_path('ohdear-health-check.php'), $this->sharedConfig($values));
-        $this->writeConfig(config_path('statamic-ohdear-health-check.php'), $this->statamicConfig($values));
+        $this->writeConfig(config_path('statamic-ohdear-addon.php'), $this->statamicConfig($values));
 
         return response()->json(['saved' => true]);
     }
@@ -63,7 +60,7 @@ class ConfigController
     {
         $sharedChecks = config('ohdear-health-check.checks', []);
         $sharedRoute = config('ohdear-health-check.health_route', []);
-        $statamicConfig = config('statamic-ohdear-health-check', []);
+        $statamicConfig = config('statamic-ohdear-addon', []);
 
         $diskCheck = $this->findCheck($sharedChecks, UsedDiskSpaceCheck::class);
         $errorLogCheck = $this->findCheck($sharedChecks, ErrorLogCheck::class);
@@ -111,7 +108,7 @@ class ConfigController
      */
     protected function sharedConfig(array $values): array
     {
-        $defaultMiddleware = config('statamic-ohdear-health-check.health_route.middleware', ['web', 'cache.headers:public;max_age=300;etag']);
+        $defaultMiddleware = config('statamic-ohdear-addon.health_route.middleware', ['web', 'cache.headers:public;max_age=300;etag']);
 
         return [
             'health_route' => [
@@ -147,7 +144,7 @@ class ConfigController
      */
     protected function statamicConfig(array $values): array
     {
-        $middleware = config('statamic-ohdear-health-check.health_route.middleware', ['web', 'cache.headers:public;max_age=300;etag']);
+        $middleware = config('statamic-ohdear-addon.health_route.middleware', ['web', 'cache.headers:public;max_age=300;etag']);
 
         return [
             'health_route' => [

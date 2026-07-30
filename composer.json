@@ -41,6 +41,7 @@
     "extra": {
         "statamic": {
             "name": "Oh Dear Health Check",
+            "handle": "statamic-ohdear-health-check",
             "description": "Integrates the Oh Dear health-check endpoint into the Statamic control panel with Statamic-specific checks."
         },
         "laravel": {

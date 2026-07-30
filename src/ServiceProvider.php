@@ -6,15 +6,12 @@ use Devskio\StatamicOhdearHealthCheck\Checks\ForgottenFiles;
 use Devskio\StatamicOhdearHealthCheck\Checks\StatamicVersion;
 use Devskio\StatamicOhdearHealthCheck\Checks\StorageFolderSize;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
 use Statamic\Facades\CP\Nav;
 use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider
 {
-    protected $routes = [
-        'cp' => __DIR__.'/../routes/cp.php',
-    ];
-
     public function register(): void
     {
         parent::register();
@@ -33,6 +30,10 @@ class ServiceProvider extends AddonServiceProvider
     {
         parent::boot();
 
+        // Register CP routes directly — bypasses getAddon() so routes always load
+        // even when the Statamic addon manifest hasn't been rebuilt yet.
+        $this->registerCpRoutes(__DIR__.'/../routes/cp.php');
+
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'statamic-ohdear-addon');
 
         if ($this->app->runningInConsole()) {
@@ -46,6 +47,12 @@ class ServiceProvider extends AddonServiceProvider
         }
 
         Nav::extend(function ($nav) {
+            // Guard prevents a fatal crash on every CP page if the route
+            // wasn't registered (e.g. missing addon manifest in Docker).
+            if (! Route::has('statamic.cp.statamic-ohdear-addon.config')) {
+                return;
+            }
+
             $nav->create('OhDear Health Check')
                 ->section('Tools')
                 ->route('statamic-ohdear-addon.config')

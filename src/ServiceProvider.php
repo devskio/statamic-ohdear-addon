@@ -19,7 +19,10 @@ class ServiceProvider extends AddonServiceProvider
     {
         parent::register();
 
-        $this->mergeConfigFrom(__DIR__.'/../config/statamic-ohdear-addon.php', 'statamic-ohdear-addon');
+        $configPath = __DIR__.'/../config/statamic-ohdear-addon.php';
+        if (file_exists($configPath)) {
+            $this->mergeConfigFrom($configPath, 'statamic-ohdear-addon');
+        }
 
         $this->app->booting(function (): void {
             $this->synchronizeSharedHealthCheckConfig();

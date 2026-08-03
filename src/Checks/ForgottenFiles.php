@@ -3,10 +3,11 @@
 namespace Devskio\StatamicOhdearHealthCheck\Checks;
 
 use OhDear\HealthCheckResults\CheckResult;
+use Statamic\Facades\Config;
 
 /**
  * Class ForgottenFiles
- * @package Devskio\StatamicOhdearHealthCheck\Checks
+ * @package Devskio\StatamicOhDearHealthCheck\Checks
  */
 class ForgottenFiles extends AbstractCheck
 {
@@ -116,8 +117,8 @@ class ForgottenFiles extends AbstractCheck
     public function getDefaultConfiguration(): array
     {
         return [
-            'allowedFilesWarningCustomCheckEnabled' => config('statamic-ohdear-health-check.enable_forgotten_files_check', true),
-            'allowedFiles' => config('statamic-ohdear-health-check.allowed_files', []),
+            'allowedFilesWarningCustomCheckEnabled' => Config::get('statamic-ohdear-health-check.enable_forgotten_files_check', true),
+            'allowedFiles' => Config::get('statamic-ohdear-health-check.allowed_files', []),
         ];
     }
 }

@@ -3,10 +3,11 @@
 namespace Devskio\StatamicOhdearHealthCheck\Checks;
 
 use OhDear\HealthCheckResults\CheckResult;
+use Statamic\Facades\Config;
 
 /**
  * Class StorageFolderSize
- * @package Devskio\StatamicOhdearHealthCheck\Checks
+ * @package Devskio\StatamicOhDearHealthCheck\Checks
  */
 class StorageFolderSize extends AbstractCheck
 {
@@ -100,9 +101,9 @@ class StorageFolderSize extends AbstractCheck
     public function getDefaultConfiguration(): array
     {
         return [
-            'storageFolderSizeWarningCustomCheckEnabled' => config('statamic-ohdear-health-check.enable_storage_folder_size_check', true),
-            'storageFolderSizeWarningThresholdError' => config('statamic-ohdear-health-check.storage_folder_size_error_threshold', 500) * $this->toBytesModifier,
-            'storageFolderSizeWarningThresholdWarning' => config('statamic-ohdear-health-check.storage_folder_size_warning_threshold', 50) * $this->toBytesModifier,
+            'storageFolderSizeWarningCustomCheckEnabled' => Config::get('statamic-ohdear-health-check.enable_storage_folder_size_check', true),
+            'storageFolderSizeWarningThresholdError' => Config::get('statamic-ohdear-health-check.storage_folder_size_error_threshold', 500) * $this->toBytesModifier,
+            'storageFolderSizeWarningThresholdWarning' => Config::get('statamic-ohdear-health-check.storage_folder_size_warning_threshold', 50) * $this->toBytesModifier,
         ];
     }
 }

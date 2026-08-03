@@ -6,7 +6,6 @@ use Devskio\StatamicOhdearHealthCheck\Checks\ForgottenFiles;
 use Devskio\StatamicOhdearHealthCheck\Checks\StatamicVersion;
 use Devskio\StatamicOhdearHealthCheck\Checks\StorageFolderSize;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Route;
 use Statamic\Facades\CP\Nav;
 use Statamic\Providers\AddonServiceProvider;
 
@@ -16,10 +15,7 @@ class ServiceProvider extends AddonServiceProvider
     {
         parent::register();
 
-        $configPath = __DIR__.'/../config/statamic-ohdear-addon.php';
-        if (file_exists($configPath)) {
-            $this->mergeConfigFrom($configPath, 'statamic-ohdear-addon');
-        }
+        $this->mergeConfigFrom(__DIR__.'/../config/statamic-ohdear-health-check.php', 'statamic-ohdear-health-check');
 
         $this->app->booting(function (): void {
             $this->synchronizeSharedHealthCheckConfig();
@@ -30,32 +26,11 @@ class ServiceProvider extends AddonServiceProvider
     {
         parent::boot();
 
-        // Register CP routes directly — bypasses getAddon() so routes always load
-        // even when the Statamic addon manifest hasn't been rebuilt yet.
-        $this->registerCpRoutes(__DIR__.'/../routes/cp.php');
-
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'statamic-ohdear-addon');
-
-        if ($this->app->runningInConsole()) {
-            $this->publishes([
-                __DIR__.'/../config/statamic-ohdear-addon.php' => config_path('statamic-ohdear-addon.php'),
-            ], 'statamic-ohdear-addon-config');
-
-            $this->publishes([
-                __DIR__.'/../resources/blueprints' => resource_path('blueprints/vendor/statamic-ohdear-addon'),
-            ], 'statamic-ohdear-addon-blueprints');
-        }
 
         Nav::extend(function ($nav) {
-            // Guard prevents a fatal crash on every CP page if the route
-            // wasn't registered (e.g. missing addon manifest in Docker).
-            if (! Route::has('statamic.cp.statamic-ohdear-addon.config')) {
-                return;
-            }
-
             $nav->create('OhDear Health Check')
                 ->section('Tools')
-                ->route('statamic-ohdear-addon.config')
+                ->route('statamic-ohdear-health-check.config')
                 ->icon('pulse');
         });
     }
@@ -63,7 +38,7 @@ class ServiceProvider extends AddonServiceProvider
     protected function synchronizeSharedHealthCheckConfig(): void
     {
         $sharedConfig = config('ohdear-health-check', []);
-        $addonConfig = config('statamic-ohdear-addon', []);
+        $addonConfig = config('statamic-ohdear-health-check', []);
         $additionalChecks = config('ohdear-health-check.additional_checks', []);
 
         $path = Arr::get($addonConfig, 'health_route.path', Arr::get($sharedConfig, 'health_route.path', '/ohdear-health-check'));

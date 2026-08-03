@@ -5,11 +5,12 @@ namespace Devskio\StatamicOhdearHealthCheck\Checks;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Cache;
 use OhDear\HealthCheckResults\CheckResult;
+use Statamic\Facades\Config;
 use Statamic\Statamic;
 
 /**
  * Class StatamicVersion
- * @package Devskio\StatamicOhdearHealthCheck\Checks
+ * @package Devskio\StatamicOhDearHealthCheck\Checks
  */
 class StatamicVersion extends AbstractCheck
 {
@@ -90,7 +91,7 @@ class StatamicVersion extends AbstractCheck
     public function getDefaultConfiguration(): array
     {
         return [
-            'statamicVersionCheckEnabled' => config('statamic-ohdear-health-check.enable_statamic_version_check', true),
+            'statamicVersionCheckEnabled' => Config::get('statamic-ohdear-health-check.enable_statamic_version_check', true),
         ];
     }
 

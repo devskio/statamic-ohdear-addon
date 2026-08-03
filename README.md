@@ -33,7 +33,7 @@ It is built as a Statamic-specific layer on top of [`devskio/laravel-ohdear-heal
 | Dependency | Version |
 |---|---|
 | PHP | ^8.2 |
-| Statamic | ^5.0 \|\| ^6.0 |
+| Statamic | ^6.0 |
 | Laravel | ^11.0 \|\| ^12.0 \|\| ^13.0 |
 
 ---

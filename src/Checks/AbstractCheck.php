@@ -6,7 +6,7 @@ use OhDear\HealthCheckResults\CheckResult;
 
 /**
  * Class AbstractCheck
- * @package Devskio\StatamicOhdearHealthCheck\Checks
+ * @package Devskio\StatamicOhDearHealthCheck\Checks
  */
 abstract class AbstractCheck
 {
@@ -81,14 +81,14 @@ abstract class AbstractCheck
      */
     public static function getIdentifier(): string
     {
-        return lcfirst((new \ReflectionClass(static::class))->getShortName());
+        return lcfirst((new \ReflectionClass(get_called_class()))->getShortName());
     }
 
     /**
      * Get the size of a folder.
      *
      * @param string $folder The path to the folder.
-     * @return int The size of the folder in bytes.
+     * @return bool|float The size of the folder in bytes, or false if the folder does not exist.
      */
     protected function getFolderSize(string $folder): int
     {

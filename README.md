@@ -34,7 +34,7 @@ It is built as a Statamic-specific layer on top of [`devskio/laravel-ohdear-heal
 |---|---|
 | PHP | ^8.2 |
 | Statamic | ^6.0 |
-| Laravel | ^11.0 \|\| ^12.0 \|\| ^13.0 |
+| Laravel | ^12.0 \|\| ^13.0 |
 
 ---
 
@@ -81,43 +81,43 @@ All settings can be managed in **three ways** (listed by priority, highest first
 OHDEAR_HEALTH_CHECK_SECRET=your-secret-here
 
 # Override the health-check endpoint path (optional)
-# OHDEAR_HEALTH_CHECK_PATH=/ohdear-health-check
-# STATAMIC_OHDEAR_HEALTH_CHECK_PATH=/ohdear-health-check  # takes precedence over OHDEAR_HEALTH_CHECK_PATH
+ OHDEAR_HEALTH_CHECK_PATH=/ohdear-health-check
+ STATAMIC_OHDEAR_HEALTH_CHECK_PATH=/ohdear-health-check  # takes precedence over OHDEAR_HEALTH_CHECK_PATH
 
 # Response format sent to Oh Dear (default: ohdear)
-# OHDEAR_RESPONSE_FORMAT=ohdear
+ OHDEAR_RESPONSE_FORMAT=ohdear
 
 # ---------------------------------------------------------------
 # Shared checks
 # ---------------------------------------------------------------
 
 # Database connectivity check
-# OHDEAR_ENABLE_DATABASE_CHECK=false
+ OHDEAR_ENABLE_DATABASE_CHECK=false
 
 # Disk used-space check
-# OHDEAR_ENABLE_DISK_USED_SPACE_CHECK=true
-# OHDEAR_DISK_SPACE_ERROR_THRESHOLD=90    # %
-# OHDEAR_DISK_SPACE_WARNING_THRESHOLD=70  # %
+ OHDEAR_ENABLE_DISK_USED_SPACE_CHECK=true
+ OHDEAR_DISK_SPACE_ERROR_THRESHOLD=90    # %
+ OHDEAR_DISK_SPACE_WARNING_THRESHOLD=70  # %
 
 # PHP error-log size check
-# OHDEAR_ENABLE_ERROR_LOG_SIZE_CHECK=true
-# OHDEAR_ERROR_LOG_ERROR_THRESHOLD=500    # MB
-# OHDEAR_ERROR_LOG_WARNING_THRESHOLD=50   # MB
+ OHDEAR_ENABLE_ERROR_LOG_SIZE_CHECK=true
+ OHDEAR_ERROR_LOG_ERROR_THRESHOLD=500    # MB
+ OHDEAR_ERROR_LOG_WARNING_THRESHOLD=50   # MB
 
 # ---------------------------------------------------------------
 # Statamic-specific checks
 # ---------------------------------------------------------------
 
 # Storage folder size check
-# OHDEAR_ENABLE_STORAGE_FOLDER_SIZE_CHECK=true
-# OHDEAR_STORAGE_FOLDER_SIZE_ERROR_THRESHOLD=500    # MB
-# OHDEAR_STORAGE_FOLDER_SIZE_WARNING_THRESHOLD=50   # MB
+ OHDEAR_ENABLE_STORAGE_FOLDER_SIZE_CHECK=true
+ OHDEAR_STORAGE_FOLDER_SIZE_ERROR_THRESHOLD=500    # MB
+ OHDEAR_STORAGE_FOLDER_SIZE_WARNING_THRESHOLD=50   # MB
 
 # Statamic version check (compares installed vs latest GitHub release)
-# OHDEAR_ENABLE_STATAMIC_VERSION_CHECK=true
+ OHDEAR_ENABLE_STATAMIC_VERSION_CHECK=true
 
 # Forgotten public files check
-# OHDEAR_ENABLE_FORGOTTEN_FILES_CHECK=true
+ OHDEAR_ENABLE_FORGOTTEN_FILES_CHECK=true
 ```
 
 ### Config file
@@ -142,19 +142,6 @@ Then edit `config/statamic-ohdear-health-check.php`:
 
 Open **Tools → OhDear Health Check** in the Statamic CP to configure all options through a UI. Settings saved here are written to the published config files and take effect immediately.
 
----
-
-## Checks reference
-
-| Check | Class | Source |
-|---|---|---|
-| Database | `DatabaseCheck` | shared package |
-| Disk used space | `UsedDiskSpaceCheck` | shared package |
-| PHP error log size | `ErrorLogCheck` | shared package |
-| Statamic version | `StatamicVersion` | this addon |
-| Storage folder size | `StorageFolderSize` | this addon |
-| Forgotten public files | `ForgottenFiles` | this addon |
-
 ### Forgotten Files check
 
 The check scans `public/` and warns about any entry that is not in the built-in allowlist:
@@ -172,15 +159,10 @@ Fetches the latest Statamic release tag from GitHub (`api.github.com`) and compa
 
 ---
 
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md).
-
----
 
 ## Authors
 
-- [devskio.com](https://devskio.com)
+- [devskio.io](https://devsk.io)
 
 ---
 

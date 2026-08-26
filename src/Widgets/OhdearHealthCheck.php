@@ -4,7 +4,9 @@ namespace Devskio\StatamicOhdearHealthCheck\Widgets;
 
 use Devskio\LaravelOhdearHealthCheck\Core\CheckRunner;
 use Devskio\StatamicOhdearHealthCheck\ServiceProvider;
+use Devskio\StatamicOhdearHealthCheck\Support\OhDearApi;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -13,7 +15,7 @@ use Statamic\Widgets\Widget;
 
 class OhdearHealthCheck extends Widget
 {
-    public const CACHE_KEY = 'statamic-ohdear-health-check.widget.v4';
+    public const CACHE_KEY = 'statamic-ohdear-health-check.widget.v5';
 
     protected static $title = 'Oh Dear';
 
@@ -57,6 +59,28 @@ class OhdearHealthCheck extends Widget
         ],
     ];
 
+    /**
+     * Fallback display names for Oh Dear check types, used when the API omits a label.
+     *
+     * @var array<string, string>
+     */
+    protected array $ohDearLabels = [
+        'uptime' => 'Uptime',
+        'performance' => 'Performance',
+        'broken_links' => 'Broken links',
+        'mixed_content' => 'Mixed content',
+        'certificate_health' => 'Certificate health',
+        'lighthouse' => 'Lighthouse',
+        'cron' => 'Scheduled tasks',
+        'application_health' => 'Application health',
+        'sitemap' => 'Sitemap',
+        'dns' => 'DNS',
+        'domain' => 'Domain expiry',
+        'ai' => 'AI',
+        'ports' => 'Ports',
+        'dns_blocklist' => 'DNS blocklist',
+    ];
+
     public function html()
     {
         if (! User::current()?->can(ServiceProvider::PERMISSION)) {
@@ -65,34 +89,205 @@ class OhdearHealthCheck extends Widget
 
         $ttl = max(0, (int) $this->config('cache', 60));
         $payload = $ttl > 0
-            ? Cache::remember(self::CACHE_KEY, $ttl, fn () => $this->runChecks())
-            : $this->runChecks();
+            ? Cache::remember(self::CACHE_KEY, $ttl, fn () => $this->gather())
+            : $this->gather();
 
-        $checks = collect($payload['checks'] ?? []);
-        $status = $this->normalizeStatus((string) ($payload['status'] ?? 'failed'));
+        $checks = collect($payload['local']['checks'] ?? []);
+        $ohDear = $payload['ohdear'] ?? ['connected' => false, 'error' => null];
+        $connected = (bool) ($ohDear['connected'] ?? false);
         $configUrl = cp_route('statamic-ohdear-health-check.config');
 
-        $passing = $checks->filter(fn (array $c) => $this->normalizeStatus((string) ($c['status'] ?? '')) === 'ok')->count();
-        $warning = $checks->filter(fn (array $c) => $this->normalizeStatus((string) ($c['status'] ?? '')) === 'warning')->count();
-        $failed = $checks->filter(fn (array $c) => $this->normalizeStatus((string) ($c['status'] ?? '')) === 'failed')->count();
-        $total = $checks->reject(fn (array $c) => $this->normalizeStatus((string) ($c['status'] ?? '')) === 'skipped')->count();
+        // Connected to Oh Dear, the strip belongs to its checks: uptime, certificates,
+        // DNS and the rest. Otherwise it falls back to whatever runs locally.
+        $monitors = $connected
+            ? ($ohDear['monitors'] ?? [])
+            : $this->monitors($checks, $configUrl);
+
+        $statuses = collect($monitors)->pluck('status');
+        $passing = $statuses->filter(fn (string $s) => $s === 'ok')->count();
+        $warning = $statuses->filter(fn (string $s) => $s === 'warning')->count();
+        $failed = $statuses->filter(fn (string $s) => $s === 'failed')->count();
+        $total = $statuses->reject(fn (string $s) => $s === 'skipped')->count();
+
+        $localStatus = $this->normalizeStatus((string) ($payload['local']['status'] ?? 'failed'));
+        $status = $connected
+            ? $this->worstStatus($statuses->push($localStatus)->all())
+            : $localStatus;
 
         return view('statamic-ohdear-health-check::widgets.health-check', [
-            'site' => $this->siteLabel(),
+            'site' => $connected ? ($ohDear['label'] ?? $this->siteLabel()) : $this->siteLabel(),
             'status' => $status,
-            'headline' => $this->headline($status, $checks),
+            'headline' => $this->headline($status, $monitors),
             'passing' => $passing,
             'total' => max($total, 1),
             'warningCount' => $warning,
             'failedCount' => $failed,
-            'finishedAt' => $payload['finished_at'] ?? null,
-            'monitors' => $this->monitors($checks, $configUrl),
+            'finishedAt' => $connected
+                ? ($ohDear['finishedAt'] ?? $payload['local']['finished_at'] ?? null)
+                : ($payload['local']['finished_at'] ?? null),
+            'monitors' => $monitors,
             'applicationHealth' => $this->applicationHealth($checks, $configUrl),
             'configUrl' => $configUrl,
-            'reportUrl' => $this->reportUrl(),
+            'reportUrl' => $connected ? ($ohDear['url'] ?? $this->reportUrl()) : $this->reportUrl(),
             'refreshUrl' => cp_route('statamic-ohdear-health-check.widget.refresh'),
             'cacheSeconds' => $ttl,
+            'connected' => $connected,
+            'ohDearError' => $ohDear['error'] ?? null,
+            'applicationHealthUrl' => $connected ? ($ohDear['applicationHealthUrl'] ?? null) : null,
         ]);
+    }
+
+    /**
+     * @return array{local: array<string, mixed>, ohdear: array<string, mixed>}
+     */
+    protected function gather(): array
+    {
+        return [
+            'local' => $this->runChecks(),
+            'ohdear' => $this->fetchOhDear(),
+        ];
+    }
+
+    /**
+     * Everything Oh Dear itself knows about the monitor: uptime, performance, broken
+     * links, certificates, DNS, domain expiry, scheduled tasks and the rest.
+     *
+     * @return array<string, mixed>
+     */
+    protected function fetchOhDear(): array
+    {
+        $api = OhDearApi::fromConfig();
+
+        if (! $api->configured()) {
+            return ['connected' => false, 'error' => null];
+        }
+
+        if (! $monitor = $api->monitor()) {
+            return ['connected' => false, 'error' => $api->error()];
+        }
+
+        $checks = collect($monitor['checks'] ?? [])
+            ->filter(fn (array $check) => (bool) ($check['enabled'] ?? true));
+
+        $hasType = fn (string $type) => $checks->contains(fn (array $check) => ($check['type'] ?? null) === $type);
+
+        // Only worth the extra round trips when the monitor actually runs those checks.
+        $uptime = $hasType('uptime') ? $api->uptimePercentage() : null;
+        $certificate = $hasType('certificate_health') ? $api->certificate() : null;
+
+        return [
+            'connected' => true,
+            'error' => $api->error(),
+            'label' => $monitor['label'] ?? null,
+            'status' => $this->normalizeStatus((string) ($monitor['summarized_check_result'] ?? '')),
+            'finishedAt' => $monitor['latest_run_date'] ?? null,
+            'url' => $api->dashboardUrl(),
+            'applicationHealthUrl' => $api->checkUrl('application_health'),
+            'monitors' => $checks
+                ->map(fn (array $check) => $this->ohDearMonitor($check, $uptime, $certificate, $api))
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $check
+     * @param  array<string, mixed>|null  $certificate
+     * @return array<string, mixed>
+     */
+    protected function ohDearMonitor(array $check, ?float $uptime, ?array $certificate, OhDearApi $api): array
+    {
+        $type = (string) ($check['type'] ?? '');
+        $result = trim((string) ($check['latest_run_result'] ?? ''));
+        $status = $result === '' ? 'skipped' : $this->normalizeStatus($result);
+        $summary = trim((string) ($check['summary'] ?? ''));
+        $checkedAgo = ($endedAt = $check['latest_run_ended_at'] ?? null)
+            ? 'checked '.Carbon::parse($endedAt)->diffForHumans()
+            : 'no result yet';
+
+        [$value, $note] = match ($type) {
+            'uptime' => $uptime !== null
+                ? [$this->formatNumber($uptime).'%', 'last 30 days']
+                : $this->summaryDisplay($summary, $status, $checkedAgo),
+            'certificate_health' => $this->certificateDisplay($certificate, $summary, $status, $checkedAgo),
+            default => $this->summaryDisplay($summary, $status, $checkedAgo),
+        };
+
+        if ($check['active_snooze'] ?? null) {
+            $note = 'snoozed · '.$note;
+        }
+
+        return [
+            'name' => $check['label'] ?? $this->ohDearLabels[$type] ?? Str::headline($type),
+            'value' => $value,
+            'note' => $note,
+            'status' => $status,
+            'bad' => in_array($status, ['failed', 'warning'], true),
+            'url' => ($url = $api->checkUrl($type)) ?? cp_route('statamic-ohdear-health-check.config'),
+            'external' => $url !== null,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $certificate
+     * @return array{0: string, 1: string}
+     */
+    protected function certificateDisplay(?array $certificate, string $summary, string $status, string $checkedAgo): array
+    {
+        $validUntil = Arr::get($certificate ?? [], 'valid_until');
+        $issuer = trim((string) Arr::get($certificate ?? [], 'issuer', ''));
+
+        if (! $validUntil) {
+            return $this->summaryDisplay($summary, $status, $checkedAgo);
+        }
+
+        $days = (int) Carbon::now()->startOfDay()->diffInDays(Carbon::parse($validUntil), false);
+
+        return [
+            $days.($days === 1 ? ' day' : ' days'),
+            $issuer !== '' ? Str::limit($issuer, 28) : 'until expiry',
+        ];
+    }
+
+    /**
+     * A short summary reads well as the cell's headline value; a longer one would be
+     * truncated there, so it moves to the note and the result word takes its place.
+     *
+     * @return array{0: string, 1: string}
+     */
+    protected function summaryDisplay(string $summary, string $status, string $checkedAgo): array
+    {
+        if ($summary === '') {
+            return [$this->statusWord($status), $checkedAgo];
+        }
+
+        return mb_strlen($summary) <= 18
+            ? [$summary, $checkedAgo]
+            : [$this->statusWord($status), $summary];
+    }
+
+    protected function statusWord(string $status): string
+    {
+        return match ($status) {
+            'ok' => 'OK',
+            'warning' => 'Warning',
+            'failed' => 'Failed',
+            default => '—',
+        };
+    }
+
+    /**
+     * @param  array<int, string>  $statuses
+     */
+    protected function worstStatus(array $statuses): string
+    {
+        foreach (['failed', 'warning', 'ok'] as $candidate) {
+            if (in_array($candidate, $statuses, true)) {
+                return $candidate;
+            }
+        }
+
+        return 'ok';
     }
 
     /**
@@ -132,7 +327,7 @@ class OhdearHealthCheck extends Widget
     protected function normalizeStatus(string $status): string
     {
         return match (strtolower($status)) {
-            'ok', 'healthy', 'success' => 'ok',
+            'ok', 'healthy', 'success', 'succeeded' => 'ok',
             'warning', 'warn' => 'warning',
             'skipped', 'skip' => 'skipped',
             default => 'failed',
@@ -140,27 +335,33 @@ class OhdearHealthCheck extends Widget
     }
 
     /**
-     * @param  Collection<int, array<string, mixed>>  $checks
+     * @param  array<int, array<string, mixed>>  $monitors
      */
-    protected function headline(string $status, Collection $checks): string
+    protected function headline(string $status, array $monitors): string
     {
         if ($status === 'ok') {
             return 'All checks passing';
         }
 
-        $problem = $checks->first(
-            fn (array $check) => $this->normalizeStatus((string) ($check['status'] ?? '')) === $status
+        $problem = collect($monitors)->first(
+            fn (array $monitor) => ($monitor['status'] ?? null) === $status
         );
 
         if (! $problem) {
             return $status === 'warning' ? 'Attention needed' : 'Checks failing';
         }
 
-        $message = trim((string) ($problem['notification_message'] ?? ''));
+        $name = (string) ($problem['name'] ?? 'Check');
+        $note = Str::after(trim((string) ($problem['note'] ?? '')), 'snoozed · ');
 
-        return $message !== ''
-            ? Str::limit($message, 72)
-            : (($problem['label'] ?? $problem['name'] ?? 'Check').($status === 'warning' ? ' warning' : ' failed'));
+        // Timestamps and placeholders say nothing a headline needs; the check's own summary does.
+        $substantive = $note !== ''
+            && $note !== 'no result yet'
+            && ! Str::startsWith($note, ['checked ', 'snoozed']);
+
+        return $substantive
+            ? Str::limit($name.' — '.$note, 72)
+            : $name.($status === 'warning' ? ' warning' : ' failed');
     }
 
     /**
@@ -179,8 +380,10 @@ class OhdearHealthCheck extends Widget
                 'name' => $check['label'] ?? $check['name'] ?? 'Check',
                 'value' => $value,
                 'note' => $note,
+                'status' => $status,
                 'bad' => in_array($status, ['failed', 'warning'], true),
                 'url' => $configUrl.'#'.$this->tabFor($key),
+                'external' => false,
             ];
         })->values()->all();
     }

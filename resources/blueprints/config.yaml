@@ -20,6 +20,22 @@ tabs:
               display: 'Oh dear secret key'
               localizable: false
           -
+            handle: oh_dear_api_token
+            field:
+              type: text
+              display: 'Oh Dear API token'
+              instructions: 'Optional. Generate one at ohdear.app/user/api-tokens to pull uptime, performance, certificates, DNS and the rest into the dashboard widget.'
+              input_type: password
+              localizable: false
+          -
+            handle: oh_dear_monitor_id
+            field:
+              type: text
+              display: 'Oh Dear monitor ID'
+              instructions: 'The number in your monitor URL, e.g. 12345 in ohdear.app/monitors/12345.'
+              input_type: number
+              localizable: false
+          -
             handle: enable_database_check
             field:
               default: false
@@ -148,7 +164,7 @@ tabs:
           -
             handle: allowed_files
             field:
-              type: array
+              type: list
               display: 'Allowed files'
               localizable: false
               if:

@@ -16,8 +16,13 @@
                 <span class="ohd-kicker">Oh Dear</span>
                 <h2 class="ohd-empty__title">Not connected</h2>
                 <span class="ohd-empty__body">
-                    No health checks are running yet. Configure the checks for <strong>{{ $site }}</strong> to pull
-                    disk space, error log, storage size and forgotten files into this widget.
+                    @if ($ohDearError)
+                        {{ $ohDearError }}. Check the API token and monitor ID for <strong>{{ $site }}</strong>.
+                    @else
+                        Nothing to report yet. Enable the local checks, and add an Oh Dear API token and monitor ID
+                        to pull uptime, performance, broken links, mixed content, certificates, DNS, domain expiry
+                        and scheduled tasks for <strong>{{ $site }}</strong> into this widget.
+                    @endif
                 </span>
             </div>
             <div class="ohd-empty__actions">
@@ -65,12 +70,17 @@
             @unless ($isFailed)
                 <div class="ohd-section ohd-section--tight">
                     <span class="ohd-kicker">Monitors</span>
+                    @if ($connected)
+                        <span class="ohd-note">reported by Oh Dear</span>
+                    @else
+                        <a href="{{ $configUrl }}" class="ohd-link">Connect Oh Dear for uptime, certificates and more</a>
+                    @endif
                 </div>
             @endunless
 
             <div class="ohd-grid ohd-grid--monitors">
                 @foreach ($monitors as $monitor)
-                    <a href="{{ $monitor['url'] }}" class="ohd-monitor">
+                    <a href="{{ $monitor['url'] }}" class="ohd-monitor" @if ($monitor['external'] ?? false) target="_blank" rel="noopener" @endif>
                         <span class="ohd-monitor__name">{{ $monitor['name'] }}</span>
                         <span class="ohd-monitor__value">{{ $monitor['value'] }}</span>
                         <span class="ohd-monitor__note {{ $monitor['bad'] ? 'ohd-monitor__note--bad' : '' }}" title="{{ $monitor['note'] }}">
@@ -84,6 +94,9 @@
             <div class="ohd-section">
                 <span class="ohd-kicker">Application health</span>
                 <span class="ohd-note">reported by the Statamic addon</span>
+                @if ($applicationHealthUrl)
+                    <a href="{{ $applicationHealthUrl }}" target="_blank" rel="noopener" class="ohd-link">Latest run in Oh Dear</a>
+                @endif
             </div>
 
             <div class="ohd-grid ohd-grid--cards">
@@ -122,7 +135,9 @@
             {{-- Footer --}}
             <div class="ohd-foot">
                 <span class="ohd-foot__text">
-                    @if ($cacheSeconds > 0)
+                    @if ($ohDearError)
+                        {{ $ohDearError }} · showing local checks only
+                    @elseif ($cacheSeconds > 0)
                         Cached up to {{ $cacheSeconds }}s · thresholds set in config
                     @else
                         Live results · thresholds set in config

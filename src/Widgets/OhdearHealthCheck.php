@@ -184,7 +184,7 @@ class OhdearHealthCheck extends Widget
             'connected' => true,
             'error' => $api->error(),
             'label' => $monitor['label'] ?? null,
-            'status' => $this->normalizeStatus((string) ($monitor['summarized_check_result'] ?? '')),
+            'status' => $this->ohDearStatus((string) ($monitor['summarized_check_result'] ?? '')),
             'finishedAt' => $monitor['latest_run_date'] ?? null,
             'url' => $api->dashboardUrl(),
             'applicationHealthUrl' => $api->checkUrl('application_health'),
@@ -203,9 +203,8 @@ class OhdearHealthCheck extends Widget
     protected function ohDearMonitor(array $check, ?float $uptime, ?array $certificate, OhDearApi $api): array
     {
         $type = (string) ($check['type'] ?? '');
-        $result = trim((string) ($check['latest_run_result'] ?? ''));
-        $status = $result === '' ? 'skipped' : $this->normalizeStatus($result);
-        $summary = trim((string) ($check['summary'] ?? ''));
+        $status = $this->ohDearStatus((string) ($check['latest_run_result'] ?? ''));
+        $summary = $this->reliableSummary(trim((string) ($check['summary'] ?? '')), $status);
         $checkedAgo = ($endedAt = $check['latest_run_ended_at'] ?? null)
             ? 'checked '.Carbon::parse($endedAt)->diffForHumans()
             : 'no result yet';
@@ -213,6 +212,9 @@ class OhdearHealthCheck extends Widget
         [$value, $note] = match ($type) {
             'uptime' => $uptime !== null
                 ? [$this->formatNumber($uptime).'%', 'last 30 days']
+                : $this->summaryDisplay($summary, $status, $checkedAgo),
+            'performance' => is_numeric($ms = $check['average_response_time_in_ms'] ?? null)
+                ? [$this->formatNumber((float) $ms, 0).' ms', 'average, last 15 min']
                 : $this->summaryDisplay($summary, $status, $checkedAgo),
             'certificate_health' => $this->certificateDisplay($certificate, $summary, $status, $checkedAgo),
             default => $this->summaryDisplay($summary, $status, $checkedAgo),
@@ -255,6 +257,21 @@ class OhdearHealthCheck extends Widget
     }
 
     /**
+     * Oh Dear's `summary` is not trustworthy on every check type — lighthouse and
+     * dns_blocklist report "Error" next to a succeeded run, where the dashboard shows them
+     * as perfectly fine. `latest_run_result` is the authoritative field, so a summary that
+     * contradicts it is dropped rather than shown as the cell's headline.
+     */
+    protected function reliableSummary(string $summary, string $status): string
+    {
+        $contradictions = ['error', 'errored', 'failed', 'failure', 'down', 'warning'];
+
+        return $status === 'ok' && in_array(mb_strtolower($summary), $contradictions, true)
+            ? ''
+            : $summary;
+    }
+
+    /**
      * A short summary reads well as the cell's headline value; a longer one would be
      * truncated there, so it moves to the note and the result word takes its place.
      *
@@ -271,10 +288,27 @@ class OhdearHealthCheck extends Widget
             : [$this->statusWord($status), $summary];
     }
 
+    /**
+     * Oh Dear reports one of: pending, succeeded, warning, failed, errored-or-timed-out.
+     *
+     * A check that has not run yet is pending, not broken — and an unfamiliar result from a
+     * future Oh Dear release should stay quiet rather than turn the widget red, which is why
+     * this does not fall through to normalizeStatus()'s deliberately pessimistic default.
+     */
+    protected function ohDearStatus(string $result): string
+    {
+        return match (strtolower(trim($result))) {
+            'succeeded' => 'ok',
+            'warning' => 'warning',
+            'failed', 'errored-or-timed-out' => 'failed',
+            default => 'skipped',
+        };
+    }
+
     protected function statusWord(string $status): string
     {
         return match ($status) {
-            'ok' => 'OK',
+            'ok' => 'Ok',
             'warning' => 'Warning',
             'failed' => 'Failed',
             default => '—',
@@ -689,6 +723,11 @@ class OhdearHealthCheck extends Widget
 
     protected function formatNumber(float $number, int $decimals = 2): string
     {
-        return rtrim(rtrim(number_format($number, $decimals), '0'), '.');
+        $formatted = number_format($number, $decimals);
+
+        // Only trim the fractional part — rtrim on "70" would leave "7".
+        return str_contains($formatted, '.')
+            ? rtrim(rtrim($formatted, '0'), '.')
+            : $formatted;
     }
 }

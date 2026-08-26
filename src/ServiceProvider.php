@@ -14,6 +14,24 @@ class ServiceProvider extends AddonServiceProvider
 {
     public const PERMISSION = 'configure ohdear health check';
 
+    /**
+     * Views would otherwise be namespaced under the vendor/package name, while the
+     * addon (and its blueprints) refer to everything by slug.
+     *
+     * @var string
+     */
+    protected $viewNamespace = 'statamic-ohdear-health-check';
+
+    /**
+     * The control panel compiles widget HTML as a Vue template and discards any
+     * <style> tag it finds there, so the widget's styles ship as a CP stylesheet.
+     *
+     * @var list<string>
+     */
+    protected $stylesheets = [
+        __DIR__.'/../resources/css/widget.css',
+    ];
+
     public function register(): void
     {
         parent::register();

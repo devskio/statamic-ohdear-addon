@@ -52,8 +52,8 @@ tabs:
               default: '90'
               type: float
               display: 'Disk space error threshold'
-              instructions: 'in %'
               localizable: false
+              append: '%'
               if:
                 enable_disk_used_space_check: 'equals true'
           -
@@ -62,7 +62,7 @@ tabs:
               default: '70'
               type: float
               display: 'Disk space warning threshold'
-              instructions: 'in %'
+              append: '%'
               localizable: false
               if:
                 enable_disk_used_space_check: 'equals true'
@@ -85,7 +85,7 @@ tabs:
               default: '500'
               type: float
               display: 'Error log error threshold'
-              instructions: 'in Megabytes'
+              append: 'MB'
               localizable: false
               if:
                 enable_error_log_size_check: 'equals true'
@@ -95,7 +95,7 @@ tabs:
               default: '50'
               type: float
               display: 'Error log warning threshold'
-              instructions: 'in Megabytes'
+              append: 'MB'
               localizable: false
               if:
                 enable_error_log_size_check: 'equals true'
@@ -118,7 +118,7 @@ tabs:
               default: '500'
               type: float
               display: 'Storage folder size error threshold'
-              instructions: 'in Megabytes'
+              append: 'MB'
               localizable: false
               if:
                 enable_storage_folder_size_check: 'equals true'
@@ -128,7 +128,7 @@ tabs:
               default: '50'
               type: float
               display: 'Storage folder size warning threshold'
-              instructions: 'in Megabytes'
+              append: 'MB'
               localizable: false
               if:
                 enable_storage_folder_size_check: 'equals true'

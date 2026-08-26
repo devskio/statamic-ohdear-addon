@@ -11,6 +11,17 @@ return [
     'secret' => env('OHDEAR_HEALTH_CHECK_SECRET', env('OHDEAR_SECRET', '')),
     'oh_dear_secret_key' => env('OHDEAR_HEALTH_CHECK_SECRET', env('OHDEAR_SECRET', '')),
 
+    // --- Oh Dear API (optional) ---
+    // With a token and monitor ID, the dashboard widget also shows what Oh Dear itself
+    // monitors: uptime, performance, broken links, mixed content, certificates, DNS,
+    // domain expiry and scheduled tasks. Tokens live at https://ohdear.app/user/api-tokens,
+    // and the monitor ID is the number in the dashboard URL (ohdear.app/monitors/12345).
+
+    'api_token' => env('OHDEAR_API_TOKEN', ''),
+    'monitor_id' => env('OHDEAR_MONITOR_ID', env('OHDEAR_SITE_ID')),
+    'api_base_url' => env('OHDEAR_API_BASE_URL', 'https://ohdear.app/api'),
+    'api_timeout' => env('OHDEAR_API_TIMEOUT', 5), // seconds
+
     // --- Shared checks (also configurable via Tools → OhDear Health Check in the Statamic CP) ---
 
     'enable_database_check' => env('OHDEAR_ENABLE_DATABASE_CHECK', false),

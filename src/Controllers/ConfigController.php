@@ -79,6 +79,8 @@ class ConfigController
             'oh_dear_secret_key' => (string) (config('ohdear-health-check.secret')
                 ?? Arr::get($statamicConfig, 'secret')
                 ?? Arr::get($statamicConfig, 'oh_dear_secret_key', '')),
+            'oh_dear_api_token' => (string) Arr::get($statamicConfig, 'api_token', ''),
+            'oh_dear_monitor_id' => (string) (Arr::get($statamicConfig, 'monitor_id') ?? ''),
             'enable_database_check' => $this->hasCheck($sharedChecks, DatabaseCheck::class),
             'enable_disk_used_space_check' => $this->hasCheck($sharedChecks, UsedDiskSpaceCheck::class),
             'disk_space_error_threshold' => (float) Arr::get(
@@ -163,6 +165,10 @@ class ConfigController
             'response_format' => 'ohdear',
             'secret' => $this->nullableString($values['oh_dear_secret_key'] ?? null),
             'oh_dear_secret_key' => $this->nullableString($values['oh_dear_secret_key'] ?? null),
+            'api_token' => $this->nullableString($values['oh_dear_api_token'] ?? null),
+            'monitor_id' => $this->nullableInteger($values['oh_dear_monitor_id'] ?? null),
+            'api_base_url' => config('statamic-ohdear-health-check.api_base_url', 'https://ohdear.app/api'),
+            'api_timeout' => (int) config('statamic-ohdear-health-check.api_timeout', 5),
             'enable_database_check' => $this->boolean($values['enable_database_check'] ?? false),
             'enable_disk_used_space_check' => $this->boolean($values['enable_disk_used_space_check'] ?? false),
             'disk_space_error_threshold' => (float) ($values['disk_space_error_threshold'] ?? 90),
@@ -227,6 +233,11 @@ class ConfigController
         }
 
         return filter_var($value, FILTER_VALIDATE_BOOL);
+    }
+
+    protected function nullableInteger(mixed $value): ?int
+    {
+        return is_numeric($value) ? (int) $value : null;
     }
 
     protected function nullableString(mixed $value): ?string

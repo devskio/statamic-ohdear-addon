@@ -25,6 +25,7 @@ It is built as a Statamic-specific layer on top of [`devskio/laravel-ohdear-heal
   - Disk used space
   - PHP error log size
 - Oh Dear-compatible JSON response format
+- **Dashboard widget** – a control-panel widget showing the local checks alongside everything Oh Dear itself monitors (uptime, performance, broken links, mixed content, certificate health, DNS, domain expiry, scheduled tasks) when an API token is configured
 
 ---
 
@@ -88,6 +89,19 @@ OHDEAR_HEALTH_CHECK_SECRET=your-secret-here
  OHDEAR_RESPONSE_FORMAT=ohdear
 
 # ---------------------------------------------------------------
+# Oh Dear API (optional — powers the dashboard widget's monitor strip)
+# ---------------------------------------------------------------
+
+# Token from https://ohdear.app/user/api-tokens
+OHDEAR_API_TOKEN=
+
+# The number in your monitor URL, e.g. 12345 in ohdear.app/monitors/12345
+OHDEAR_MONITOR_ID=
+
+# Request timeout in seconds (default: 5)
+ OHDEAR_API_TIMEOUT=5
+
+# ---------------------------------------------------------------
 # Shared checks
 # ---------------------------------------------------------------
 
@@ -141,6 +155,56 @@ Then edit `config/statamic-ohdear-health-check.php`:
 ### Control panel
 
 Open **Tools → OhDear Health Check** in the Statamic CP to configure all options through a UI. Settings saved here are written to the published config files and take effect immediately.
+
+### Dashboard widget
+
+Add the widget to `config/statamic/cp.php`:
+
+```php
+'widgets' => [
+    ['type' => 'ohdear_health_check', 'width' => 100],
+],
+```
+
+Only users with the **View OhDear health check widget** permission see it — for everyone else it
+renders nothing and Statamic drops it from the dashboard. It is a permission of its own, so
+configuring the addon does not imply seeing the widget (and vice versa). Grant it per role under **Users → Permissions**. To skip running the checks entirely
+for users who can't see it, gate the widget in `cp.php` as well:
+
+```php
+'widgets' => [
+    [
+        'type' => 'ohdear_health_check',
+        'width' => 100,
+        'can' => 'view ohdear health check widget',
+    ],
+],
+```
+
+The widget needs its stylesheet published once:
+
+```bash
+php artisan vendor:publish --tag=statamic-ohdear-health-check --force
+```
+
+It shows the four application-health cards (disk space, error log, storage size, forgotten
+files) from the local checks. Add `OHDEAR_API_TOKEN` and `OHDEAR_MONITOR_ID` — or fill them in
+under **Tools → OhDear Health Check** — and the monitor strip above them is populated from the
+Oh Dear API instead of the local checks: uptime, performance, broken links, mixed content,
+certificate health, DNS, domain expiry, scheduled tasks and anything else enabled on the
+monitor. Results are cached for the widget's `cache` seconds (default 60), and the widget falls
+back to local checks if the API is unreachable.
+
+### Permissions
+
+| Permission | Grants |
+| --- | --- |
+| `configure ohdear health check` | Access to **Tools → OhDear Health Check** |
+| `view ohdear health check widget` | The dashboard widget |
+
+The two are independent: grant the widget to editors without letting them change thresholds, or
+give an admin the settings screen without putting the widget on their dashboard. Super users
+have both. Neither is granted by default, so add them to the roles that need them.
 
 ### Forgotten Files check
 

@@ -1,9 +1,10 @@
 # Statamic Oh Dear Health Check
 
-[![Packagist Version](https://img.shields.io/packagist/v/devskio/statamic-ohdear-health-check)](https://packagist.org/packages/devskio/statamic-ohdear-health-check)
-[![Total Downloads](https://img.shields.io/packagist/dt/devskio/statamic-ohdear-health-check)](https://packagist.org/packages/devskio/statamic-ohdear-health-check)
+[![Packagist Version](https://img.shields.io/packagist/v/devskio/statamic-ohdear-addon)](https://packagist.org/packages/devskio/statamic-ohdear-addon)
+[![Total Downloads](https://img.shields.io/packagist/dt/devskio/statamic-ohdear-addon)](https://packagist.org/packages/devskio/statamic-ohdear-addon)
 [![License](https://img.shields.io/github/license/devskio/statamic-ohdear-addon)](LICENSE)
-[![PHP](https://img.shields.io/packagist/php-v/devskio/statamic-ohdear-health-check)](composer.json)
+[![PHP](https://img.shields.io/packagist/php-v/devskio/statamic-ohdear-addon)](composer.json)
+[![Statamic](https://img.shields.io/packagist/dependency-v/devskio/statamic-ohdear-addon/statamic/cms)](https://statamic.com)
 
 A Statamic addon that exposes an [Oh Dear](https://ohdear.app)-compatible health-check endpoint and provides a control-panel configuration screen.
 
@@ -42,7 +43,7 @@ It is built as a Statamic-specific layer on top of [`devskio/laravel-ohdear-heal
 ## Installation
 
 ```bash
-composer require devskio/statamic-ohdear-health-check
+composer require devskio/statamic-ohdear-addon
 ```
 
 The `devskio/laravel-ohdear-health-check` package is installed automatically as a dependency.

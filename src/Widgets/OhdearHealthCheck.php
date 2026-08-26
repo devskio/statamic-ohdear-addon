@@ -83,7 +83,7 @@ class OhdearHealthCheck extends Widget
 
     public function html()
     {
-        if (! User::current()?->can(ServiceProvider::PERMISSION)) {
+        if (! $this->authorized()) {
             return;
         }
 
@@ -135,6 +135,11 @@ class OhdearHealthCheck extends Widget
             'ohDearError' => $ohDear['error'] ?? null,
             'applicationHealthUrl' => $connected ? ($ohDear['applicationHealthUrl'] ?? null) : null,
         ]);
+    }
+
+    protected function authorized(): bool
+    {
+        return (bool) User::current()?->can(ServiceProvider::WIDGET_PERMISSION);
     }
 
     /**

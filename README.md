@@ -166,6 +166,21 @@ Add the widget to `config/statamic/cp.php`:
 ],
 ```
 
+Only users with the **View OhDear health check widget** permission see it — for everyone else it
+renders nothing and Statamic drops it from the dashboard. It is a permission of its own, so
+configuring the addon does not imply seeing the widget (and vice versa). Grant it per role under **Users → Permissions**. To skip running the checks entirely
+for users who can't see it, gate the widget in `cp.php` as well:
+
+```php
+'widgets' => [
+    [
+        'type' => 'ohdear_health_check',
+        'width' => 100,
+        'can' => 'view ohdear health check widget',
+    ],
+],
+```
+
 The widget needs its stylesheet published once:
 
 ```bash
@@ -179,6 +194,17 @@ Oh Dear API instead of the local checks: uptime, performance, broken links, mixe
 certificate health, DNS, domain expiry, scheduled tasks and anything else enabled on the
 monitor. Results are cached for the widget's `cache` seconds (default 60), and the widget falls
 back to local checks if the API is unreachable.
+
+### Permissions
+
+| Permission | Grants |
+| --- | --- |
+| `configure ohdear health check` | Access to **Tools → OhDear Health Check** |
+| `view ohdear health check widget` | The dashboard widget |
+
+The two are independent: grant the widget to editors without letting them change thresholds, or
+give an admin the settings screen without putting the widget on their dashboard. Super users
+have both. Neither is granted by default, so add them to the roles that need them.
 
 ### Forgotten Files check
 

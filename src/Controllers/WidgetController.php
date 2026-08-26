@@ -12,7 +12,7 @@ class WidgetController
 {
     public function refresh(): RedirectResponse
     {
-        abort_unless(User::current()?->can(ServiceProvider::PERMISSION), 403);
+        abort_unless(User::current()?->can(ServiceProvider::WIDGET_PERMISSION), 403);
 
         Cache::forget(OhdearHealthCheck::CACHE_KEY);
 

@@ -15,6 +15,13 @@ class ServiceProvider extends AddonServiceProvider
     public const PERMISSION = 'configure ohdear health check';
 
     /**
+     * Seeing the dashboard widget is deliberately separate from configuring the addon,
+     * so the widget can be granted to (or withheld from) users who have no business
+     * changing thresholds.
+     */
+    public const WIDGET_PERMISSION = 'view ohdear health check widget';
+
+    /**
      * Views would otherwise be namespaced under the vendor/package name, while the
      * addon (and its blueprints) refer to everything by slug.
      *
@@ -50,6 +57,10 @@ class ServiceProvider extends AddonServiceProvider
         Permission::extend(function () {
             Permission::register(self::PERMISSION)
                 ->label('Configure OhDear Health Check');
+
+            Permission::register(self::WIDGET_PERMISSION)
+                ->label('View OhDear health check widget')
+                ->description('Show the Oh Dear widget on the dashboard.');
         });
 
         Nav::extend(function ($nav) {

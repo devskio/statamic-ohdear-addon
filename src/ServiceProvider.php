@@ -7,10 +7,13 @@ use Devskio\StatamicOhdearHealthCheck\Checks\StatamicVersion;
 use Devskio\StatamicOhdearHealthCheck\Checks\StorageFolderSize;
 use Illuminate\Support\Arr;
 use Statamic\Facades\CP\Nav;
+use Statamic\Facades\Permission;
 use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider
 {
+    public const PERMISSION = 'configure ohdear health check';
+
     public function register(): void
     {
         parent::register();
@@ -26,12 +29,17 @@ class ServiceProvider extends AddonServiceProvider
     {
         parent::boot();
 
+        Permission::extend(function () {
+            Permission::register(self::PERMISSION)
+                ->label('Configure OhDear Health Check');
+        });
 
         Nav::extend(function ($nav) {
             $nav->create('OhDear Health Check')
                 ->section('Tools')
                 ->route('statamic-ohdear-health-check.config')
-                ->icon('pulse');
+                ->icon('pulse')
+                ->can(self::PERMISSION);
         });
     }
 

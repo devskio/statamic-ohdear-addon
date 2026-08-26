@@ -5,17 +5,21 @@ namespace Devskio\StatamicOhdearHealthCheck\Controllers;
 use Devskio\LaravelOhdearHealthCheck\Health\Checks\DatabaseCheck;
 use Devskio\LaravelOhdearHealthCheck\Health\Checks\ErrorLogCheck;
 use Devskio\LaravelOhdearHealthCheck\Health\Checks\UsedDiskSpaceCheck;
+use Devskio\StatamicOhdearHealthCheck\ServiceProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 use Statamic\Facades\Blueprint;
+use Statamic\Facades\User;
 
 class ConfigController
 {
     public function index()
     {
+        $this->authorize();
+
         $blueprint = Blueprint::find('statamic-ohdear-health-check::config');
 
         abort_unless($blueprint !== null, 404);
@@ -38,6 +42,8 @@ class ConfigController
 
     public function save(Request $request): JsonResponse
     {
+        $this->authorize();
+
         $blueprint = Blueprint::find('statamic-ohdear-health-check::config');
 
         abort_unless($blueprint !== null, 404);
@@ -239,5 +245,10 @@ class ConfigController
         }
 
         return '/'.ltrim($path, '/');
+    }
+
+    protected function authorize(): void
+    {
+        abort_unless(User::current()?->can(ServiceProvider::PERMISSION), 403);
     }
 }
